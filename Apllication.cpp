@@ -1,8 +1,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <glm/mat4x4.hpp>
 
 #include <Iostream>
 #include <stdio.h>
+#include <cmath>
 
 /*static int CompileShader(unsigned int type, const std::string& source)
 {
@@ -46,29 +48,36 @@
 // window size
 const GLint WIDTH = 800, HEIGHT = 600;
 
-GLuint VAO, VBO, shader;
+GLuint VAO, VBO, shader, uniformXMove;
+
+bool direction = true;
+float triOffset = 0.0f;
+float maxTriOffset = 0.6f;
+float triIncrement = 0.0005f;
 
 // vs
-static const char* vS = "                                         \n\
-#version 330                                                      \n\
-                                                                  \n\
-layout (location = 0) in vec3 pos;                                \n\
-                                                                  \n\
-void main()                                                       \n\
-{                                                                 \n\
-   gl_Position = vec4(0.4 * pos.x, 0.4 * pos.y, pos.z, 1.0);      \n\
+static const char* vS = "                                                 \n\
+#version 330                                                              \n\
+                                                                          \n\
+layout (location = 0) in vec3 pos;                                        \n\
+                                                                          \n\
+uniform float xMove;                                                      \n\
+                                                                          \n\
+void main()                                                               \n\
+{                                                                         \n\
+   gl_Position = vec4(0.4 * pos.x + xMove, 0.4 * pos.y, pos.z, 1.0);      \n\
 }";
 
 
 // fs
-static const char* fS = "                                         \n\
-#version 330                                                      \n\
-                                                                  \n\
-out vec4 colour;                                                  \n\
-                                                                  \n\
-void main()                                                       \n\
-{                                                                 \n\
-   colour = vec4(1.0, 0.0, 1.0, 0.5);                             \n\
+static const char* fS = "                                                 \n\
+#version 330                                                              \n\
+                                                                          \n\
+out vec4 colour;                                                          \n\
+                                                                          \n\
+void main()                                                               \n\
+{                                                                         \n\
+   colour = vec4(1.0, 0.0, 1.0, 0.5);                                     \n\
 }";
 
 
@@ -128,7 +137,7 @@ void ShaderCompiler()
 {
     shader = glCreateProgram();
 
-    if (!shader) 
+    if (!shader)
     {
         printf("Error creating ShaderProgram!!\n");
         return;
@@ -157,6 +166,8 @@ void ShaderCompiler()
         printf("Error validating program: '%s'\n", eLog);
         return;
     }
+
+    uniformXMove = glGetUniformLocation(shader, "xMove");
 }
 
 
@@ -209,19 +220,33 @@ int main(void)
         // poll + events
         glfwPollEvents();
         
+        if (direction)
+        {
+            triOffset += triIncrement;
+        }
+        else 
+        {
+            triOffset -= triIncrement;
+        }
+
+        if (abs(triOffset) >= maxTriOffset)
+        {
+            direction = !direction;
+        }
+
         /* Render here */
         glClearColor(0.0f, 0.2f, 1.0f, 0.2f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shader);
 
+        glUniform1f(uniformXMove, triOffset);
+
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(0);
 
         glUseProgram(0);
-
-
         /* Swap front and back buffers */
          glfwSwapBuffers(window);
     }
