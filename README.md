@@ -1,1 +1,1 @@
-please ignore the giant comment of code
+now updated + everything is more organized 
