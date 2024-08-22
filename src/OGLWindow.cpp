@@ -5,12 +5,27 @@ OGLWindow::OGLWindow()
 {
 	width = 800;
 	heigth = 600;
+
+    for (size_t i = 0; i < 1020; i++) 
+    {
+        keys[i] = 0;
+    }
+
+    xChange = 0.0f;
+    yChange = 0.0f;
 }
 
 OGLWindow::OGLWindow(GLint windowWidth, GLint windowHeight)
 {
 	width = windowWidth;
 	heigth = windowHeight;
+
+    for (size_t i = 0; i < 1020; i++) {
+        keys[i] = 0;
+    }
+
+    xChange = 0.0f;
+    yChange = 0.0f;
 }
 
 int OGLWindow::initialise()
@@ -43,6 +58,10 @@ int OGLWindow::initialise()
     // Set context for GLEW to use
     glfwMakeContextCurrent(mainWindow);
 
+    // Handle keyboard + mouse inputs
+    createCallbacks();
+    glfwSetInputMode(mainWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     // Allow modern extensions
     glewExperimental = GL_TRUE;
 
@@ -65,8 +84,70 @@ int OGLWindow::initialise()
 
     // Setup viewport size
     glViewport(0, 0, bufferWidth, bufferHeight);
+
+    glfwSetWindowUserPointer(mainWindow, this);
 }
 
+void OGLWindow::createCallbacks()
+{
+    glfwSetKeyCallback(mainWindow, handleKeys);
+    glfwSetCursorPosCallback(mainWindow, handleMouse);
+}
+
+GLfloat OGLWindow::getXChange()
+{
+    GLfloat theChange = xChange;
+    xChange = 0.0f;
+    return theChange;
+}
+
+GLfloat OGLWindow::getYChange()
+{
+    GLfloat theChange = yChange;
+    yChange = 0.0f;
+    return theChange;
+}
+
+void OGLWindow::handleKeys(GLFWwindow* window, int key, int code, int action, int mode)
+{
+    OGLWindow* theWindow = static_cast<OGLWindow*>(glfwGetWindowUserPointer(window));
+
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    {
+        glfwSetWindowShouldClose(window, GL_TRUE);
+    }
+
+    if (key >= 0 && key < 1024)
+    {
+        if (action == GLFW_PRESS)
+        {
+            theWindow->keys[key] = true;
+        }
+
+        if (action == GLFW_RELEASE) 
+        {
+            theWindow->keys[key] = false;
+        }
+    }
+}
+
+void OGLWindow::handleMouse(GLFWwindow* window, double xPos, double yPos)
+{
+    OGLWindow* theWindow = static_cast<OGLWindow*>(glfwGetWindowUserPointer(window));
+
+    if (theWindow->mouseFirstMoved)
+    {
+        theWindow->lastX = xPos;
+        theWindow->lastY = yPos;
+        theWindow->mouseFirstMoved = false;
+    }
+
+    theWindow->xChange = xPos - theWindow->lastX;
+    theWindow->yChange = theWindow->lastY - yPos;
+
+    theWindow->lastX = xPos;
+    theWindow->lastY = yPos;
+}
 
 OGLWindow::~OGLWindow()
 {
