@@ -1,1 +1,1 @@
-remade things fron git
+remade things from git
